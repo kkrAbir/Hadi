@@ -29,11 +29,11 @@ threading.Thread(target=run_web).start()
 # ===============================
 #  ENVIRONMENT VARIABLES
 # ===============================
-BOT_TOKEN = os.getenv("8177590946:AAGtKOX7o1nuMQX1woQTLarOtiQbTZ-jEzw")
-CHAT_ID = os.getenv("-1003434836385")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
-USERNAME = os.getenv("Abir4090")
-PASSWORD = os.getenv("Abir4090@#")
+USERNAME = os.getenv("PANEL_USER")
+PASSWORD = os.getenv("PANEL_PASS")
 
 BASE = "http://185.2.83.39"
 DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
