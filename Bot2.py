@@ -1,19 +1,18 @@
-import time
-import requests
-import logging
-import json
 import os
 import re
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.error import TimedOut
+import json
+import time
 import asyncio
+import logging
+import requests
 from datetime import datetime
 from flask import Flask
 import threading
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
-# ===============================
-#  HEALTH CHECK SERVER (REQUIRED)
-# ===============================
+# =====================================================
+# HEALTH CHECK SERVER (REQUIRED FOR RENDER + UPTIMEROBOT)
+# =====================================================
 app = Flask(__name__)
 
 @app.route("/")
@@ -25,10 +24,9 @@ def run_web():
 
 threading.Thread(target=run_web).start()
 
-
-# ===============================
-#  ENVIRONMENT VARIABLES
-# ===============================
+# =====================================================
+# ENVIRONMENT VARIABLES (SECURE)
+# =====================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
@@ -40,13 +38,15 @@ DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
 LOGIN_PAGE = BASE + "/ints/login"
 LOGIN_POST = BASE + "/ints/signin"
 
-
-# ===============================
+# =====================================================
 # LOGGING
-# ===============================
+# =====================================================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 bot = Bot(token=BOT_TOKEN)
 
+# =====================================================
+# REQUESTS SESSION
+# =====================================================
 session = requests.Session()
 session.headers.update({
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -54,56 +54,51 @@ session.headers.update({
     "Accept-Language": "en-US,en;q=0.9"
 })
 
+# OTP REGEX
 OTP_REGEX = re.compile(r"\b\d{4,8}\b")
 
-
-# ===============================
-# COUNTRY DETECTION
-# ===============================
+# =====================================================
+# COUNTRY DETECTOR (ADD YOUR FULL DATA HERE)
+# =====================================================
 COUNTRIES = {
     "880": "🇧🇩 Bangladesh",
-    "1": "🇺🇸 USA / Canada",
+    "1": "🇺🇸 USA /🇨🇦Canada",
     "44": "🇬🇧 United Kingdom",
     "91": "🇮🇳 India",
-    "7": "🇷🇺 Russia / Kazakhstan",
-    # (তোমার পুরো 200+ দেশের dictionary এখানে 그대로 রাখো)
-    # আমি সব এখানে কপি করিনি কারণ তোমার ফাইলে অ্যালরেডি আছে
+    "7": "🇷🇺 Russia / 🇰🇿Kazakhstan",
 }
-
 
 def get_country(number):
     for code in sorted(COUNTRIES.keys(), key=lambda x: -len(x)):
         if number.startswith(code):
             return COUNTRIES[code]
-    return "🌍 Unknown Country"
+    return "🌍 Unknown"
 
-
-# ===============================
-# SENT KEYS (NO FILE — RENDER SAFE)
-# ===============================
+# =====================================================
+# MEMORY-ONLY SENT KEYS (RENDER SAFE)
+# =====================================================
 sent_keys = set()
 
-
-# ===============================
+# =====================================================
 # LOGIN FUNCTION
-# ===============================
+# =====================================================
 def login():
     try:
-        r = session.get(LOGIN_PAGE, timeout=10)
-        m = re.search(r"What is (\d+)\s*\+\s*(\d+)", r.text)
+        page = session.get(LOGIN_PAGE, timeout=10)
+        m = re.search(r"What is (\d+)\s*\+\s*(\d+)", page.text)
         captcha = int(m.group(1)) + int(m.group(2)) if m else None
 
         payload = {"username": USERNAME, "password": PASSWORD}
         if captcha:
             payload["capt"] = captcha
 
-        r2 = session.post(LOGIN_POST, data=payload, timeout=10)
+        res = session.post(LOGIN_POST, data=payload, timeout=10)
 
-        if "dashboard" in r2.text.lower():
+        if "dashboard" in res.text.lower():
             logging.info("Login success ✓")
             return True
 
-        if r2.status_code == 200 and "login" not in r2.text.lower():
+        if res.status_code == 200 and "login" not in res.text.lower():
             logging.info("Login success ✓")
             return True
 
@@ -111,13 +106,12 @@ def login():
         return False
 
     except Exception as e:
-        logging.error("Login error: %s", e)
+        logging.error(f"Login Error: {e}")
         return False
 
-
-# ===============================
-# API URL (DATE RANGE)
-# ===============================
+# =====================================================
+# API URL GENERATOR
+# =====================================================
 def get_api_url():
     today = datetime.now().strftime("%Y-%m-%d")
     return (
@@ -125,26 +119,29 @@ def get_api_url():
         "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=50"
     )
 
-
-# ===============================
-# FETCH DATA
-# ===============================
+# =====================================================
+# FETCH PANEL DATA
+# =====================================================
 def fetch_data():
     try:
-        r = session.get(get_api_url(), headers={"X-Requested-With": "XMLHttpRequest"}, timeout=10)
+        response = session.get(
+            get_api_url(),
+            headers={"X-Requested-With": "XMLHttpRequest"},
+            timeout=10
+        )
 
-        if "login" in r.text.lower():
+        if "login" in response.text.lower():
             login()
             return None
 
-        return r.json()
-    except:
+        return response.json()
+
+    except Exception:
         return None
 
-
-# ===============================
-# MAIN OTP CHECKER
-# ===============================
+# =====================================================
+# CHECK OTP + SEND MESSAGE
+# =====================================================
 async def check_sms():
     data = fetch_data()
     if not data or "aaData" not in data:
@@ -154,21 +151,18 @@ async def check_sms():
         if len(row) < 6:
             continue
 
-        try:
-            date = str(row[0]).strip()
-            number = str(row[2]).strip()
-            service = str(row[3]).strip()
-            message = str(row[5]).strip()
-        except:
-            continue
+        date = str(row[0]).strip()
+        number = str(row[2]).strip()
+        service = str(row[3]).strip()
+        message = str(row[5]).strip()
 
         matches = OTP_REGEX.findall(message)
         if not matches:
             continue
 
         otp = max(matches, key=len)
-
         key = f"{number}|{otp}|{date}"
+
         if key in sent_keys:
             continue
 
@@ -189,25 +183,25 @@ async def check_sms():
 
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("🧑‍💻Dev", url="https://t.me/RTX_ABIR_4090")],
-            [InlineKeyboardButton("📞Number", url="https://t.me/+iooisG0X4oNmODdl")],
+            [InlineKeyboardButton("📞Number", url="https://t.me/+iooisG0X4oNmODdl")]
         ])
 
         try:
-            await bot.send_message(
+            bot.send_message(
                 chat_id=CHAT_ID,
                 text=text,
                 parse_mode="HTML",
                 reply_markup=keyboard
             )
+
             logging.info(f"[✓] OTP SENT → {otp}")
 
         except Exception as e:
-            logging.error("Telegram error:", e)
+            logging.error(f"Telegram error: {e}")
 
-
-# ===============================
+# =====================================================
 # MAIN LOOP
-# ===============================
+# =====================================================
 async def main():
     if not login():
         logging.error("Login failed. Bot stopping.")
@@ -216,6 +210,5 @@ async def main():
     while True:
         await check_sms()
         await asyncio.sleep(3)
-
 
 asyncio.run(main())
