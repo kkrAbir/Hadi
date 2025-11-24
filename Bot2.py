@@ -334,9 +334,14 @@ def login():
 # API URL GENERATOR
 # =====================================================
 def get_api_url():
-    today = datetime.now().strftime("%Y-%m-%d")
+    now = datetime.now()
+    one_hour_ago = now - timedelta(hours=1)
+
+    fdate1 = one_hour_ago.strftime("%Y-%m-%d %H:%M:%S")
+    fdate2 = now.strftime("%Y-%m-%d %H:%M:%S")
+
     return (
-        f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59&"
+        f"{DATA_URL}?fdate1={fdate1}&fdate2={fdate2}&"
         "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=50"
     )
 
@@ -393,9 +398,9 @@ async def check_sms():
 
         text = (
             "✨ <b>OTP Received</b> ✨\n\n"
-            f"🌍 <b>Country:</b> {country}\n"
             f"⏰ <b>Time:</b> {date}\n"
             f"📞 <b>Number:</b> {number}\n"
+            f"🌍 <b>Country:</b> {country}\n"
             f"🔧 <b>Service:</b> {service}\n"
             f"🔐 <b>OTP:</b> <code>{otp}</code>\n"
             f"📝 <b>Message:</b> <i>{message}</i>\n\n"
