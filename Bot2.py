@@ -5,10 +5,11 @@ import time
 import asyncio
 import logging
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask import Flask
 import threading
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+
 # =====================================================
 # HEALTH CHECK SERVER (REQUIRED FOR RENDER + UPTIMEROBOT)
 # =====================================================
@@ -73,7 +74,7 @@ COUNTRIES = {
 "963": "🇸🇾 Syria",
 "962": "🇯🇴 Jordan",
 "90": "🇹🇷 Turkey",
-"1": "🇺🇸 USA /🇨🇦 Canada",
+"1": "🇺🇸 USA / Canada",
 "44": "🇬🇧 United Kingdom",
 "33": "🇫🇷 France",
 "39": "🇮🇹 Italy",
@@ -146,7 +147,7 @@ COUNTRIES = {
 "258": "🇲🇿 Mozambique",
 "260": "🇿🇲 Zambia",
 "261": "🇲🇬 Madagascar",
-"262": "🇷🇪 Réunion",
+"262": "🇷🇪 Réunion / 🇾🇹 Mayotte",
 "263": "🇿🇼 Zimbabwe",
 "264": "🇳🇦 Namibia",
 "265": "🇲🇼 Malawi",
@@ -154,7 +155,7 @@ COUNTRIES = {
 "267": "🇧🇼 Botswana",
 "268": "🇸🇿 Eswatini",
 "269": "🇰🇲 Comoros",
-"290": "🇸🇭 St. Helena ",
+"290": "🇸🇭 St. Helena / 🇹🇦 Tristan da Cunha",
 "291": "🇪🇷 Eritrea",
 "297": "🇦🇼 Aruba",
 "298": "🇫🇴 Faroe Islands",
@@ -168,7 +169,7 @@ COUNTRIES = {
 "56": "🇨🇱 Chile",
 "57": "🇨🇴 Colombia",
 "58": "🇻🇪 Venezuela",
-"590": "🇬🇵 Guadeloupe",
+"590": "🇬🇵 Guadeloupe / 🇲🇫 St. Martin / 🇧🇱 St. Barthélemy",
 "591": "🇧🇴 Bolivia",
 "592": "🇬🇾 Guyana",
 "593": "🇪🇨 Ecuador",
@@ -176,7 +177,7 @@ COUNTRIES = {
 "595": "🇵🇾 Paraguay",
 "597": "🇸🇷 Suriname",
 "598": "🇺🇾 Uruguay",
-"599": "🇨🇼 Curaçao",
+"599": "🇨🇼 Curaçao / 🇸🇽 Sint Maarten / 🇧🇶 Caribbean Netherlands",
 # Europe
 "30": "🇬🇷 Greece",
 "31": "🇳🇱 Netherlands",
@@ -189,7 +190,7 @@ COUNTRIES = {
 "355": "🇦🇱 Albania",
 "356": "🇲🇹 Malta",
 "357": "🇨🇾 Cyprus",
-"358": "🇫🇮 Finland",
+"358": "🇫🇮 Finland / 🇦🇽 Åland Islands",
 "359": "🇧🇬 Bulgaria",
 "370": "🇱🇹 Lithuania",
 "371": "🇱🇻 Latvia",
@@ -217,7 +218,7 @@ COUNTRIES = {
 "49": "🇩🇪 Germany",
 # Asia
 "60": "🇲🇾 Malaysia",
-"61": "🇦🇺 Australia",
+"61": "🇦🇺 Australia / 🇨🇽 Christmas Island / 🇨🇨 Cocos Islands",
 "62": "🇮🇩 Indonesia",
 "63": "🇵🇭 Philippines",
 "64": "🇳🇿 New Zealand / 🇵🇳 Pitcairn",
@@ -244,7 +245,7 @@ COUNTRIES = {
 "98": "🇮🇷 Iran",
 # Oceania
 "670": "🇹🇱 East Timor",
-"672": "🇳🇫 Norfolk Island",
+"672": "🇳🇫 Norfolk Island / 🇦🇶 Antarctica",
 "673": "🇧🇳 Brunei",
 "674": "🇳🇷 Nauru",
 "675": "🇵🇬 Papua New Guinea",
@@ -267,14 +268,14 @@ COUNTRIES = {
 # Russia & Central Asia
 "7": "🇷🇺 Russia / 🇰🇿 Kazakhstan",
 # Other
-"259": "🇰🇲 Comoros",
-"293": "🇸🇭 St. Helena",
-"295": "🇸🇲 San Marino",
-"296": "🇹🇿 Tanzania",
+"259": "🇰🇲 Comoros (deprecated)",
+"293": "🇸🇭 St. Helena (deprecated)",
+"295": "🇸🇲 San Marino (deprecated)",
+"296": "🇹🇿 Tanzania (deprecated)",
 "420": "🇨🇿 Czechia",
 "421": "🇸🇰 Slovakia",
 "423": "🇱🇮 Liechtenstein",
-"499": "🇩🇪 Germany",
+"499": "🇩🇪 Germany (deprecated)",
 "992": "🇹🇯 Tajikistan",
 "993": "🇹🇲 Turkmenistan",
 "994": "🇦🇿 Azerbaijan",
@@ -333,15 +334,13 @@ def login():
 # API URL GENERATOR
 # =====================================================
 def get_api_url():
-    now = datetime.now()
-    one_hour_ago = now - timedelta(hours=1)
-
-    fdate1 = one_hour_ago.strftime("%Y-%m-%d %H:%M:%S")
-    fdate2 = now.strftime("%Y-%m-%d %H:%M:%S")
+    today = datetime.now().strftime("%Y-%m-%d")
+    start = f"{today} 00:00:00"
+    end = f"{today} 23:59:59"
 
     return (
-        f"{DATA_URL}?fdate1={fdate1}&fdate2={fdate2}&"
-        "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=50"
+        f"{DATA_URL}?fdate1={start}&fdate2={end}"
+        "&sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=500"
     )
 
 # =====================================================
