@@ -369,14 +369,14 @@ async def check_sms():
         service = str(row[3]).strip()
         message = str(row[5]).strip()
 
-        # Extract OTP
+        # extract all 4–8 digit OTP-like sequences
         numbers = re.findall(r"\d{4,8}", message)
         if not numbers:
             continue
 
         otp = max(numbers, key=len)
-        key = f"{number}|{otp}|{date}"
 
+        key = f"{number}|{otp}|{date}"
         if key in sent_keys:
             continue
 
@@ -407,6 +407,7 @@ async def check_sms():
                 parse_mode="HTML",
                 reply_markup=keyboard
             )
+
             logging.info(f"[✓] OTP SENT → {otp}")
 
         except Exception as e:
