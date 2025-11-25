@@ -38,6 +38,7 @@ DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
 LOGIN_PAGE = BASE + "/ints/login"
 LOGIN_POST = BASE + "/ints/signin"
 
+
 # =====================================================
 # LOGGING
 # =====================================================
@@ -74,13 +75,11 @@ COUNTRIES = {
 "963": "🇸🇾 Syria",
 "962": "🇯🇴 Jordan",
 "90": "🇹🇷 Turkey",
-"1": "🇺🇸 USA / Canada",
+"1": "🇺🇸 USA / 🇨🇦Canada",
 "44": "🇬🇧 United Kingdom",
 "33": "🇫🇷 France",
 "39": "🇮🇹 Italy",
 "34": "🇪🇸 Spain",
-# --- অতিরিক্ত দেশসমূহ ---
-# North America (Area Code 1 - shared with USA/Canada)
 "1242": "🇧🇸 Bahamas",
 "1246": "🇧🇧 Barbados",
 "1268": "🇦🇬 Antigua & Barbuda",
@@ -95,11 +94,10 @@ COUNTRIES = {
 "1684": "🇦🇸 American Samoa",
 "1758": "🇱🇨 St. Lucia",
 "1767": "🇩🇲 Dominica",
-"1784": "🇻🇨 St. Vincent & Grenadines",
+"1784": "🇻🇨 St. Vincent",
 "1809": "🇩🇴 Dominican Republic",
 "1868": "🇹🇹 Trinidad & Tobago",
 "1876": "🇯🇲 Jamaica",
-# Africa
 "20": "🇪🇬 Egypt",
 "27": "🇿🇦 South Africa",
 "212": "🇲🇦 Morocco",
@@ -125,11 +123,11 @@ COUNTRIES = {
 "236": "🇨🇫 Central African Republic",
 "237": "🇨🇲 Cameroon",
 "238": "🇨🇻 Cape Verde",
-"239": "🇸🇹 São Tomé & Príncipe",
+"239": "🇸🇹 São Tome",
 "240": "🇬🇶 Equatorial Guinea",
 "241": "🇬🇦 Gabon",
-"242": "🇨🇬 Congo - Brazzaville",
-"243": "🇨🇩 Congo - Kinshasa (DRC)",
+"242": "🇨🇬 Brazzaville",
+"243": "🇨🇩 Kinshasa",
 "244": "🇦🇴 Angola",
 "245": "🇬🇼 Guinea-Bissau",
 "246": "🇮🇴 British Indian Ocean Territory",
@@ -147,7 +145,7 @@ COUNTRIES = {
 "258": "🇲🇿 Mozambique",
 "260": "🇿🇲 Zambia",
 "261": "🇲🇬 Madagascar",
-"262": "🇷🇪 Réunion / 🇾🇹 Mayotte",
+"262": "🇷🇪 Réunion",
 "263": "🇿🇼 Zimbabwe",
 "264": "🇳🇦 Namibia",
 "265": "🇲🇼 Malawi",
@@ -155,12 +153,11 @@ COUNTRIES = {
 "267": "🇧🇼 Botswana",
 "268": "🇸🇿 Eswatini",
 "269": "🇰🇲 Comoros",
-"290": "🇸🇭 St. Helena / 🇹🇦 Tristan da Cunha",
+"290": "🇸🇭 St. Helena",
 "291": "🇪🇷 Eritrea",
 "297": "🇦🇼 Aruba",
 "298": "🇫🇴 Faroe Islands",
 "299": "🇬🇱 Greenland",
-# South America
 "51": "🇵🇪 Peru",
 "52": "🇲🇽 Mexico",
 "53": "🇨🇺 Cuba",
@@ -169,7 +166,7 @@ COUNTRIES = {
 "56": "🇨🇱 Chile",
 "57": "🇨🇴 Colombia",
 "58": "🇻🇪 Venezuela",
-"590": "🇬🇵 Guadeloupe / 🇲🇫 St. Martin / 🇧🇱 St. Barthélemy",
+"590": "🇬🇵 Guadeloupe",
 "591": "🇧🇴 Bolivia",
 "592": "🇬🇾 Guyana",
 "593": "🇪🇨 Ecuador",
@@ -177,8 +174,7 @@ COUNTRIES = {
 "595": "🇵🇾 Paraguay",
 "597": "🇸🇷 Suriname",
 "598": "🇺🇾 Uruguay",
-"599": "🇨🇼 Curaçao / 🇸🇽 Sint Maarten / 🇧🇶 Caribbean Netherlands",
-# Europe
+"599": "🇨🇼 Curaçao",
 "30": "🇬🇷 Greece",
 "31": "🇳🇱 Netherlands",
 "32": "🇧🇪 Belgium",
@@ -190,12 +186,12 @@ COUNTRIES = {
 "355": "🇦🇱 Albania",
 "356": "🇲🇹 Malta",
 "357": "🇨🇾 Cyprus",
-"358": "🇫🇮 Finland / 🇦🇽 Åland Islands",
+"358": "🇫🇮 Finland",
 "359": "🇧🇬 Bulgaria",
 "370": "🇱🇹 Lithuania",
 "371": "🇱🇻 Latvia",
 "372": "🇪🇪 Estonia",
-"373": "🇲🇩 Moldova / 🇹🇱 East Timor",
+"373": "🇲🇩 Moldova",
 "374": "🇦🇲 Armenia",
 "375": "🇧🇾 Belarus",
 "376": "🇦🇩 Andorra",
@@ -206,7 +202,7 @@ COUNTRIES = {
 "382": "🇲🇪 Montenegro",
 "385": "🇭🇷 Croatia",
 "386": "🇸🇮 Slovenia",
-"387": "🇧🇦 Bosnia & Herzegovina",
+"387": "🇧🇦 Bosnia",
 "389": "🇲🇰 North Macedonia",
 "40": "🇷🇴 Romania",
 "41": "🇨🇭 Switzerland",
@@ -216,12 +212,11 @@ COUNTRIES = {
 "47": "🇳🇴 Norway",
 "48": "🇵🇱 Poland",
 "49": "🇩🇪 Germany",
-# Asia
 "60": "🇲🇾 Malaysia",
-"61": "🇦🇺 Australia / 🇨🇽 Christmas Island / 🇨🇨 Cocos Islands",
+"61": "🇦🇺 Australia",
 "62": "🇮🇩 Indonesia",
 "63": "🇵🇭 Philippines",
-"64": "🇳🇿 New Zealand / 🇵🇳 Pitcairn",
+"64": "🇳🇿 New Zealand",
 "65": "🇸🇬 Singapore",
 "66": "🇹🇭 Thailand",
 "81": "🇯🇵 Japan",
@@ -243,9 +238,8 @@ COUNTRIES = {
 "976": "🇲🇳 Mongolia",
 "977": "🇳🇵 Nepal",
 "98": "🇮🇷 Iran",
-# Oceania
 "670": "🇹🇱 East Timor",
-"672": "🇳🇫 Norfolk Island / 🇦🇶 Antarctica",
+"672": "🇳🇫 Norfolk Island",
 "673": "🇧🇳 Brunei",
 "674": "🇳🇷 Nauru",
 "675": "🇵🇬 Papua New Guinea",
@@ -265,9 +259,7 @@ COUNTRIES = {
 "690": "🇹🇰 Tokelau",
 "691": "🇫🇲 Micronesia",
 "692": "🇲🇭 Marshall Islands",
-# Russia & Central Asia
 "7": "🇷🇺 Russia / 🇰🇿 Kazakhstan",
-# Other
 "259": "🇰🇲 Comoros (deprecated)",
 "293": "🇸🇭 St. Helena (deprecated)",
 "295": "🇸🇲 San Marino (deprecated)",
@@ -275,14 +267,12 @@ COUNTRIES = {
 "420": "🇨🇿 Czechia",
 "421": "🇸🇰 Slovakia",
 "423": "🇱🇮 Liechtenstein",
-"499": "🇩🇪 Germany (deprecated)",
 "992": "🇹🇯 Tajikistan",
 "993": "🇹🇲 Turkmenistan",
 "994": "🇦🇿 Azerbaijan",
 "995": "🇬🇪 Georgia",
 "996": "🇰🇬 Kyrgyzstan",
 "998": "🇺🇿 Uzbekistan",
-# Special Codes
 "800": "🌐 International Toll-Free",
 "882": "🌐 International Networks",
 "883": "🌐 International Networks",
@@ -335,12 +325,9 @@ def login():
 # =====================================================
 def get_api_url():
     today = datetime.now().strftime("%Y-%m-%d")
-    start = f"{today} 00:00:00"
-    end = f"{today} 23:59:59"
-
     return (
-        f"{DATA_URL}?fdate1={start}&fdate2={end}"
-        "&sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=500"
+        f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59&"
+        "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=50"
     )
 
 # =====================================================
@@ -366,45 +353,44 @@ def fetch_data():
 # =====================================================
 # CHECK OTP + SEND MESSAGE
 # =====================================================
-for row in data["aaData"]:
-    if len(row) < 6:
-        continue
+async def check_sms():
+    data = fetch_data()
+    if not data or "aaData" not in data:
+        return
 
-    date = str(row[0]).strip()
-    number = str(row[2]).strip()
-    service = str(row[3]).strip()
-    message = str(row[5]).strip()
+    for row in data["aaData"]:
+        if len(row) < 6:
+            continue
 
-    # Number masking
-    if len(number) >= 6:
-        masked_number = number[:4] + "***" + number[-4:]
-    else:
-        masked_number = number  
+        date = str(row[0]).strip()
+        number = str(row[2]).strip()
+        service = str(row[3]).strip()
+        message = str(row[5]).strip()
 
-    matches = OTP_REGEX.findall(message)
-    if not matches:
-        continue
+        matches = OTP_REGEX.findall(message)
+        if not matches:
+            continue
 
-    otp = max(matches, key=len)
-    key = f"{number}|{otp}|{date}"
+        otp = max(matches, key=len)
+        key = f"{number}|{otp}|{date}"
 
-    if key in sent_keys:
-        continue
+        if key in sent_keys:
+            continue
 
-    sent_keys.add(key)
+        sent_keys.add(key)
 
-    country = get_country(number)
+        country = get_country(number)
 
-    text = (
-        "✨ <b>OTP Received</b> ✨\n\n"
-        f"⏰ <b>Time:</b> {date}\n"
-        f"📞 <b>Number:</b> {masked_number}\n"
-        f"🌍 <b>Country:</b> {country}\n"
-        f"🔧 <b>Service:</b> {service}\n"
-        f"🔐 <b>OTP:</b> <code>{otp}</code>\n"
-        f"📝 <b>Message:</b> <i>{message}</i>\n\n"
-        "<b>POWERED BY</b> @RTX_ABIR_4090"
-    )
+        text = (
+            "✨ <b>OTP Received</b> ✨\n\n"
+            f"⏰ <b>Time:</b> {date}\n"
+            f"📞 <b>Number:</b> {number}\n"
+            f"🌍 <b>Country:</b> {country}\n"
+            f"🔧 <b>Service:</b> {service}\n"
+            f"🔐 <b>OTP:</b> <code>{otp}</code>\n"
+            f"📝 <b>Message:</b> <i>{message}</i>\n\n"
+            "<b>POWERED BY</b> @RTX_ABIR_4090"
+        )
 
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("🧑‍💻Dev", url="https://t.me/RTX_ABIR_4090")],
