@@ -56,7 +56,7 @@ session.headers.update({
 })
 
 # OTP REGEX
-OTP_REGEX = re.compile(r"\b\d{4,8}\b")
+OTP_REGEX = re.compile(r"(?:\b|^)(\d{4,8})(?:\b|$)")
 
 # =====================================================
 # COUNTRY DETECTOR (ADD YOUR FULL DATA HERE)
