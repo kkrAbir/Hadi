@@ -325,10 +325,17 @@ def login():
 # =====================================================
 # API URL GENERATOR
 # =====================================================
+from datetime import datetime, timedelta
+
 def get_api_url():
-    today = datetime.now().strftime("%Y-%m-%d")
+    now = datetime.now()
+    two_hours_ago = now - timedelta(hours=2)
+
+    fdate1 = two_hours_ago.strftime("%Y-%m-%d%%20%H:%M:%S")
+    fdate2 = now.strftime("%Y-%m-%d%%20%H:%M:%S")
+
     return (
-        f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59&"
+        f"{DATA_URL}?fdate1={fdate1}&fdate2={fdate2}&"
         "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=50"
     )
 
