@@ -355,21 +355,27 @@ def fetch_data():
 # =====================================================
 # CHECK OTP + SEND MESSAGE
 # =====================================================
-for row in data["aaData"]:
-    if len(row) < 6:
-        continue
+async def check_sms():
+    data = fetch_data()
+    if not data or "aaData" not in data:
+        return
 
-    date = str(row[0]).strip()
-    number = str(row[2]).strip()
-    service = str(row[3]).strip()
-    message = str(row[5]).strip()
+    for row in data["aaData"]:
+        if len(row) < 6:
+            continue
 
-    numbers = re.findall(r"\d{4,8}", message)
-    if not numbers:
-        continue
+        date = str(row[0]).strip()
+        number = str(row[2]).strip()
+        service = str(row[3]).strip()
+        message = str(row[5]).strip()
 
-    otp = max(numbers, key=len)
-    key = f"{number}|{otp}|{date}"
+        # Extract OTP
+        numbers = re.findall(r"\d{4,8}", message)
+        if not numbers:
+            continue
+
+        otp = max(numbers, key=len)
+        key = f"{number}|{otp}|{date}"
 
         if key in sent_keys:
             continue
@@ -401,7 +407,6 @@ for row in data["aaData"]:
                 parse_mode="HTML",
                 reply_markup=keyboard
             )
-
             logging.info(f"[✓] OTP SENT → {otp}")
 
         except Exception as e:
