@@ -56,7 +56,7 @@ session.headers.update({
 })
 
 # OTP REGEX
-OTP_REGEX = re.compile(r"(?:\b|^)(\d{4,8})(?:\b|$)")
+OTP_REGEX = re.compile(r"\b\d{4,8}\b")
 
 # =====================================================
 # COUNTRY DETECTOR (ADD YOUR FULL DATA HERE)
@@ -98,6 +98,7 @@ COUNTRIES = {
 "1809": "🇩🇴 Dominican Republic",
 "1868": "🇹🇹 Trinidad & Tobago",
 "1876": "🇯🇲 Jamaica",
+# Africa
 "20": "🇪🇬 Egypt",
 "27": "🇿🇦 South Africa",
 "212": "🇲🇦 Morocco",
@@ -212,6 +213,7 @@ COUNTRIES = {
 "47": "🇳🇴 Norway",
 "48": "🇵🇱 Poland",
 "49": "🇩🇪 Germany",
+# Asia
 "60": "🇲🇾 Malaysia",
 "61": "🇦🇺 Australia",
 "62": "🇮🇩 Indonesia",
@@ -367,11 +369,11 @@ async def check_sms():
         service = str(row[3]).strip()
         message = str(row[5]).strip()
 
-        matches = OTP_REGEX.findall(message)
-        if not matches:
-            continue
+        numbers = re.findall(r"\d{4,8}", message)
+if not numbers:
+    continue
 
-        otp = max(matches, key=len)
+otp = max(numbers, key=len)
         key = f"{number}|{otp}|{date}"
 
         if key in sent_keys:
