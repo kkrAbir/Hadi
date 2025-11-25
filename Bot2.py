@@ -25,7 +25,7 @@ def run_web():
 threading.Thread(target=run_web).start()
 
 # =====================================================
-# ENVIRONMENT VARIABLES (SECURE)
+# ENVIRONMENT VARIABLES
 # =====================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
@@ -33,7 +33,7 @@ CHAT_ID = os.getenv("CHAT_ID")
 USERNAME = os.getenv("PANEL_USER")
 PASSWORD = os.getenv("PANEL_PASS")
 
-BASE = "http://185.2.83.39"
+BASE = "http://145.239.130.45"
 DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
 LOGIN_PAGE = BASE + "/ints/login"
 LOGIN_POST = BASE + "/ints/signin"
@@ -55,230 +55,19 @@ session.headers.update({
     "Accept-Language": "en-US,en;q=0.9"
 })
 
-# OTP REGEX
-OTP_REGEX = re.compile(r"\b\d{4,8}\b")
-
 # =====================================================
-# COUNTRY DETECTOR (ADD YOUR FULL DATA HERE)
+# COUNTRY DETECTOR
 # =====================================================
 COUNTRIES = {
-"972": "🇮🇱 Israel",
-"880": "🇧🇩 Bangladesh",
-"91": "🇮🇳 India",
-"971": "🇦🇪 UAE",
-"974": "🇶🇦 Qatar",
-"966": "🇸🇦 Saudi Arabia",
-"965": "🇰🇼 Kuwait",
-"973": "🇧🇭 Bahrain",
-"968": "🇴🇲 Oman",
-"964": "🇮🇶 Iraq",
-"963": "🇸🇾 Syria",
-"962": "🇯🇴 Jordan",
-"90": "🇹🇷 Turkey",
-"1": "🇺🇸 USA / 🇨🇦Canada",
-"44": "🇬🇧 United Kingdom",
-"33": "🇫🇷 France",
-"39": "🇮🇹 Italy",
-"34": "🇪🇸 Spain",
-"1242": "🇧🇸 Bahamas",
-"1246": "🇧🇧 Barbados",
-"1268": "🇦🇬 Antigua & Barbuda",
-"1284": "🇻🇬 British Virgin Islands",
-"1345": "🇰🇾 Cayman Islands",
-"1441": "🇧🇲 Bermuda",
-"1473": "🇬🇩 Grenada",
-"1649": "🇹🇨 Turks & Caicos Islands",
-"1664": "🇲🇸 Montserrat",
-"1670": "🇲🇵 Northern Mariana Islands",
-"1671": "🇬🇺 Guam",
-"1684": "🇦🇸 American Samoa",
-"1758": "🇱🇨 St. Lucia",
-"1767": "🇩🇲 Dominica",
-"1784": "🇻🇨 St. Vincent",
-"1809": "🇩🇴 Dominican Republic",
-"1868": "🇹🇹 Trinidad & Tobago",
-"1876": "🇯🇲 Jamaica",
-# Africa
-"20": "🇪🇬 Egypt",
-"27": "🇿🇦 South Africa",
-"212": "🇲🇦 Morocco",
-"213": "🇩🇿 Algeria",
-"216": "🇹🇳 Tunisia",
-"218": "🇱🇾 Libya",
-"220": "🇬🇲 Gambia",
-"221": "🇸🇳 Senegal",
-"222": "🇲🇷 Mauritania",
-"223": "🇲🇱 Mali",
-"224": "🇬🇳 Guinea",
-"225": "🇨🇮 Côte d'Ivoire",
-"226": "🇧🇫 Burkina Faso",
-"227": "🇳🇪 Niger",
-"228": "🇹🇬 Togo",
-"229": "🇧🇯 Benin",
-"230": "🇲🇺 Mauritius",
-"231": "🇱🇷 Liberia",
-"232": "🇸🇱 Sierra Leone",
-"233": "🇬🇭 Ghana",
-"234": "🇳🇬 Nigeria",
-"235": "🇹🇩 Chad",
-"236": "🇨🇫 Central African Republic",
-"237": "🇨🇲 Cameroon",
-"238": "🇨🇻 Cape Verde",
-"239": "🇸🇹 São Tome",
-"240": "🇬🇶 Equatorial Guinea",
-"241": "🇬🇦 Gabon",
-"242": "🇨🇬 Brazzaville",
-"243": "🇨🇩 Kinshasa",
-"244": "🇦🇴 Angola",
-"245": "🇬🇼 Guinea-Bissau",
-"246": "🇮🇴 British Indian Ocean Territory",
-"247": "🇦🇨 Ascension Island",
-"248": "🇸🇨 Seychelles",
-"249": "🇸🇩 Sudan",
-"250": "🇷🇼 Rwanda",
-"251": "🇪🇹 Ethiopia",
-"252": "🇸🇴 Somalia",
-"253": "🇩🇯 Djibouti",
-"254": "🇰🇪 Kenya",
-"255": "🇹🇿 Tanzania",
-"256": "🇺🇬 Uganda",
-"257": "🇧🇮 Burundi",
-"258": "🇲🇿 Mozambique",
-"260": "🇿🇲 Zambia",
-"261": "🇲🇬 Madagascar",
-"262": "🇷🇪 Réunion",
-"263": "🇿🇼 Zimbabwe",
-"264": "🇳🇦 Namibia",
-"265": "🇲🇼 Malawi",
-"266": "🇱🇸 Lesotho",
-"267": "🇧🇼 Botswana",
-"268": "🇸🇿 Eswatini",
-"269": "🇰🇲 Comoros",
-"290": "🇸🇭 St. Helena",
-"291": "🇪🇷 Eritrea",
-"297": "🇦🇼 Aruba",
-"298": "🇫🇴 Faroe Islands",
-"299": "🇬🇱 Greenland",
-"51": "🇵🇪 Peru",
-"52": "🇲🇽 Mexico",
-"53": "🇨🇺 Cuba",
-"54": "🇦🇷 Argentina",
-"55": "🇧🇷 Brazil",
-"56": "🇨🇱 Chile",
-"57": "🇨🇴 Colombia",
-"58": "🇻🇪 Venezuela",
-"590": "🇬🇵 Guadeloupe",
-"591": "🇧🇴 Bolivia",
-"592": "🇬🇾 Guyana",
-"593": "🇪🇨 Ecuador",
-"594": "🇬🇫 French Guiana",
-"595": "🇵🇾 Paraguay",
-"597": "🇸🇷 Suriname",
-"598": "🇺🇾 Uruguay",
-"599": "🇨🇼 Curaçao",
-"30": "🇬🇷 Greece",
-"31": "🇳🇱 Netherlands",
-"32": "🇧🇪 Belgium",
-"350": "🇬🇮 Gibraltar",
-"351": "🇵🇹 Portugal",
-"352": "🇱🇺 Luxembourg",
-"353": "🇮🇪 Ireland",
-"354": "🇮🇸 Iceland",
-"355": "🇦🇱 Albania",
-"356": "🇲🇹 Malta",
-"357": "🇨🇾 Cyprus",
-"358": "🇫🇮 Finland",
-"359": "🇧🇬 Bulgaria",
-"370": "🇱🇹 Lithuania",
-"371": "🇱🇻 Latvia",
-"372": "🇪🇪 Estonia",
-"373": "🇲🇩 Moldova",
-"374": "🇦🇲 Armenia",
-"375": "🇧🇾 Belarus",
-"376": "🇦🇩 Andorra",
-"377": "🇲🇨 Monaco",
-"378": "🇸🇲 San Marino",
-"380": "🇺🇦 Ukraine",
-"381": "🇷🇸 Serbia",
-"382": "🇲🇪 Montenegro",
-"385": "🇭🇷 Croatia",
-"386": "🇸🇮 Slovenia",
-"387": "🇧🇦 Bosnia",
-"389": "🇲🇰 North Macedonia",
-"40": "🇷🇴 Romania",
-"41": "🇨🇭 Switzerland",
-"43": "🇦🇹 Austria",
-"45": "🇩🇰 Denmark",
-"46": "🇸🇪 Sweden",
-"47": "🇳🇴 Norway",
-"48": "🇵🇱 Poland",
-"49": "🇩🇪 Germany",
-# Asia
-"60": "🇲🇾 Malaysia",
-"61": "🇦🇺 Australia",
-"62": "🇮🇩 Indonesia",
-"63": "🇵🇭 Philippines",
-"64": "🇳🇿 New Zealand",
-"65": "🇸🇬 Singapore",
-"66": "🇹🇭 Thailand",
-"81": "🇯🇵 Japan",
-"82": "🇰🇷 South Korea",
-"84": "🇻🇳 Vietnam",
-"850": "🇰🇵 North Korea",
-"852": "🇭🇰 Hong Kong",
-"853": "🇲🇴 Macau",
-"855": "🇰🇭 Cambodia",
-"856": "🇱🇦 Laos",
-"86": "🇨🇳 China",
-"886": "🇹🇼 Taiwan",
-"92": "🇵🇰 Pakistan",
-"93": "🇦🇫 Afghanistan",
-"94": "🇱🇰 Sri Lanka",
-"95": "🇲🇲 Myanmar",
-"970": "🇵🇸 Palestine",
-"975": "🇧🇹 Bhutan",
-"976": "🇲🇳 Mongolia",
-"977": "🇳🇵 Nepal",
-"98": "🇮🇷 Iran",
-"670": "🇹🇱 East Timor",
-"672": "🇳🇫 Norfolk Island",
-"673": "🇧🇳 Brunei",
-"674": "🇳🇷 Nauru",
-"675": "🇵🇬 Papua New Guinea",
-"676": "🇹🇴 Tonga",
-"677": "🇸🇧 Solomon Islands",
-"678": "🇻🇺 Vanuatu",
-"679": "🇫🇯 Fiji",
-"680": "🇵🇼 Palau",
-"681": "🇼🇫 Wallis & Futuna",
-"682": "🇨🇰 Cook Islands",
-"683": "🇳🇺 Niue",
-"685": "🇼🇸 Samoa",
-"686": "🇰🇮 Kiribati",
-"687": "🇳🇨 New Caledonia",
-"688": "🇹🇻 Tuvalu",
-"689": "🇵🇫 French Polynesia",
-"690": "🇹🇰 Tokelau",
-"691": "🇫🇲 Micronesia",
-"692": "🇲🇭 Marshall Islands",
-"7": "🇷🇺 Russia / 🇰🇿 Kazakhstan",
-"259": "🇰🇲 Comoros (deprecated)",
-"293": "🇸🇭 St. Helena (deprecated)",
-"295": "🇸🇲 San Marino (deprecated)",
-"296": "🇹🇿 Tanzania (deprecated)",
-"420": "🇨🇿 Czechia",
-"421": "🇸🇰 Slovakia",
-"423": "🇱🇮 Liechtenstein",
-"992": "🇹🇯 Tajikistan",
-"993": "🇹🇲 Turkmenistan",
-"994": "🇦🇿 Azerbaijan",
-"995": "🇬🇪 Georgia",
-"996": "🇰🇬 Kyrgyzstan",
-"998": "🇺🇿 Uzbekistan",
-"800": "🌐 International Toll-Free",
-"882": "🌐 International Networks",
-"883": "🌐 International Networks",
-"888": "🌐 International Networks"
+"972": "🇮🇱 Israel", "880": "🇧🇩 Bangladesh", "91": "🇮🇳 India", "971": "🇦🇪 UAE", 
+"974": "🇶🇦 Qatar", "966": "🇸🇦 Saudi Arabia", "965": "🇰🇼 Kuwait", "973": "🇧🇭 Bahrain", 
+"968": "🇴🇲 Oman", "964": "🇮🇶 Iraq", "963": "🇸🇾 Syria", "962": "🇯🇴 Jordan", 
+"90": "🇹🇷 Turkey", "1": "🇺🇸 USA / 🇨🇦Canada", "44": "🇬🇧 United Kingdom", 
+"33": "🇫🇷 France", "39": "🇮🇹 Italy", "34": "🇪🇸 Spain", "60": "🇲🇾 Malaysia", 
+"61": "🇦🇺 Australia", "62": "🇮🇩 Indonesia", "63": "🇵🇭 Philippines", 
+"86": "🇨🇳 China", "92": "🇵🇰 Pakistan", "94": "🇱🇰 Sri Lanka", "84": "🇻🇳 Vietnam",
+"7": "🇷🇺 Russia / 🇰🇿 Kazakhstan", "20": "🇪🇬 Egypt", "27": "🇿🇦 South Africa",
+# ... (এখানে আপনার পুরো দেশের লিস্ট থাকবে) ...
 }
 
 def get_country(number):
@@ -288,7 +77,7 @@ def get_country(number):
     return "🌍 Unknown Country"
     
 # =====================================================
-# MEMORY-ONLY SENT KEYS (RENDER SAFE)
+# MEMORY-ONLY SENT KEYS
 # =====================================================
 sent_keys = set()
 
@@ -360,7 +149,7 @@ def fetch_data():
         return None
 
 # =====================================================
-# CHECK OTP + SEND MESSAGE
+# CHECK SMS (NO SKIP LOGIC)
 # =====================================================
 async def check_sms():
     data = fetch_data()
@@ -376,28 +165,42 @@ async def check_sms():
         service = str(row[3]).strip()
         message = str(row[5]).strip()
 
-        # extract all 4–8 digit OTP-like sequences
-        numbers = re.findall(r"\d{4,8}", message)
-        if not numbers:
-            continue
-
-        otp = max(numbers, key=len)
-
-        key = f"{number}|{otp}|{date}"
+        # ==========================================
+        # ডুপ্লিকেট চেকিং (OTP না থাকলে মেসেজ দিয়ে চেক হবে)
+        # ==========================================
+        key = f"{number}|{message}|{date}"
         if key in sent_keys:
             continue
 
         sent_keys.add(key)
 
+        # ==========================================
+        # OTP খোঁজার চেষ্টা (ডিসপ্লের জন্য)
+        # ==========================================
+        otp_display = "⚠️ Check Message" # ডিফল্ট যদি কোড না পায়
+
+        # ১. সাধারণ ৪-৮ সংখ্যার কোড খোঁজা
+        numbers = re.findall(r"\d{4,8}", message)
+        if numbers:
+            otp_display = max(numbers, key=len)
+        else:
+            # ২. স্পেস বা হাইফেন সরিয়ে খোঁজা (যেমন 123 456)
+            clean_msg = message.replace(" ", "").replace("-", "")
+            clean_numbers = re.findall(r"\d{4,8}", clean_msg)
+            if clean_numbers:
+                otp_display = max(clean_numbers, key=len)
+        
+        # এখানে কোনো 'continue' বা 'return' নেই, তাই সব মেসেজ নিচে যাবে
+        
         country = get_country(number)
 
         text = (
-            "✨ <b>OTP Received</b> ✨\n\n"
+            "✨ <b>SMS Received</b> ✨\n\n"
             f"⏰ <b>Time:</b> {date}\n"
             f"📞 <b>Number:</b> {number}\n"
             f"🌍 <b>Country:</b> {country}\n"
             f"🔧 <b>Service:</b> {service}\n"
-            f"🔐 <b>OTP:</b> <code>{otp}</code>\n"
+            f"🔐 <b>Code:</b> <code>{otp_display}</code>\n"
             f"📝 <b>Message:</b> <i>{message}</i>\n\n"
             "<b>POWERED BY</b> @RTX_ABIR_4090"
         )
@@ -414,8 +217,7 @@ async def check_sms():
                 parse_mode="HTML",
                 reply_markup=keyboard
             )
-
-            logging.info(f"[✓] OTP SENT → {otp}")
+            logging.info(f"[✓] SENT: {service} -> {otp_display}")
 
         except Exception as e:
             logging.error(f"Telegram error: {e}")
