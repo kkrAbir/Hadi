@@ -33,7 +33,7 @@ CHAT_ID = os.getenv("CHAT_ID")
 USERNAME = os.getenv("PANEL_USER")
 PASSWORD = os.getenv("PANEL_PASS")
 
-BASE = "http://145.239.130.45"
+BASE = "http://185.2.83.39"
 DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
 LOGIN_PAGE = BASE + "/ints/login"
 LOGIN_POST = BASE + "/ints/signin"
