@@ -33,10 +33,11 @@ CHAT_ID = os.getenv("CHAT_ID")
 USERNAME = os.getenv("PANEL_USER")
 PASSWORD = os.getenv("PANEL_PASS")
 
-BASE = "http://185.2.83.39"
+BASE = "http://91.232.105.47"
 DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
 LOGIN_PAGE = BASE + "/ints/login"
 LOGIN_POST = BASE + "/ints/signin"
+
 # =====================================================
 # LOGGING
 # =====================================================
@@ -414,7 +415,7 @@ async def check_sms():
 
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("🧑‍💻Dev", url="https://t.me/RTX_ABIR_4090")],
-            [InlineKeyboardButton("📞Number", url="https://t.me/+Wybg9c5ngtVhMjdl")]
+            [InlineKeyboardButton("📞Number", url="https://t.me/GURUBIT")]
         ])
 
         try:
@@ -429,7 +430,6 @@ async def check_sms():
         except Exception as e:
             logging.error(f"Telegram error: {e}")
 
-    # লুপ শেষ হলে first_run বন্ধ করে দেব
     if first_run:
         first_run = False
         logging.info("History Synced. Waiting for NEW messages...")
