@@ -41,8 +41,13 @@ LOGIN_POST = BASE + "/ints/signin"
 # =====================================================
 # LOGGING
 # =====================================================
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
-bot = Bot(token=BOT_TOKEN)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Bot টোকেন না থাকলে লগিং শুরু হবে না, তাই এখানে try-except ব্যবহার করা ভালো
+try:
+    bot = Bot(token=BOT_TOKEN)
+except Exception as e:
+    logging.error(f"Failed to initialize Telegram Bot. Check BOT_TOKEN. Error: {e}")
+    bot = None # যদি ইনিশিয়ালাইজ না হয়
 
 # =====================================================
 # REQUESTS SESSION
@@ -61,6 +66,7 @@ OTP_REGEX = re.compile(r"\b\d{4,8}\b")
 # COUNTRY DETECTOR
 # =====================================================
 COUNTRIES = {
+# ... (দেশের তালিকা অপরিবর্তিত)
 "972": "🇮🇱 Israel",
 "880": "🇧🇩 Bangladesh",
 "91": "🇮🇳 India",
@@ -311,7 +317,7 @@ def login():
             logging.info("Login success ✓")
             return True
 
-        logging.error("Login failed ✗")
+        logging.error(f"Login failed ✗. Response text snippet: {res.text[:100]}")
         return False
 
     except Exception as e:
@@ -338,14 +344,20 @@ def fetch_data():
             headers={"X-Requested-With": "XMLHttpRequest"},
             timeout=10
         )
+        
+        if response.status_code != 200:
+            logging.warning(f"Panel data fetch failed. Status Code: {response.status_code}")
+            return None
 
         if "login" in response.text.lower():
+            logging.warning("Session expired. Re-logging in.")
             login()
             return None
 
         return response.json()
 
-    except Exception:
+    except Exception as e:
+        logging.error(f"Data Fetch Error: {e}")
         return None
 
 # =====================================================
@@ -356,9 +368,10 @@ async def check_sms():
     data = fetch_data()
     
     if not data or "aaData" not in data:
+        logging.info("No data received or 'aaData' missing in API response.")
         return
 
-    for row in data["aaData"]:
+    for row in "aaData"]:
         if len(row) < 6:
             continue
 
@@ -417,22 +430,31 @@ async def check_sms():
             [InlineKeyboardButton("🧑‍💻Dev", url="https://t.me/RTX_ABIR_4090")],
             [InlineKeyboardButton("📞Number", url="https://t.me/GURUBIT")]
         ])
+        
+        # --- DEBUG LOGGING ADDED ---
+        logging.info(f"NEW MESSAGE DETECTED! Key: {key} | OTP: {otp} | Country: {country}")
+        # ---------------------------
 
         try:
-            bot.send_message(
-                chat_id=CHAT_ID,
-                text=text,
-                parse_mode="HTML",
-                reply_markup=keyboard
-            )
-            logging.info(f"[✓] SMS SENT → {otp}")
+            if bot and CHAT_ID:
+                # AWAIT ADDED: Telegram Bot send_message is an awaitable method
+                await bot.send_message(
+                    chat_id=CHAT_ID,
+                    text=text,
+                    parse_mode="HTML",
+                    reply_markup=keyboard
+                )
+                logging.info(f"[✓] SMS SENT to {CHAT_ID} -> OTP: {otp}") # ডিবাগিং লগ
+            else:
+                logging.error("Cannot send message: bot object or CHAT_ID is missing.")
 
         except Exception as e:
-            logging.error(f"Telegram error: {e}")
+            # টেলিগ্রামের ক্ষেত্রে এটি সবচেয়ে সাধারণ ব্যর্থতা
+            logging.error(f"Telegram error sending message to {CHAT_ID}: {e}")
 
     if first_run:
         first_run = False
-        logging.info("History Synced. Waiting for NEW messages...")
+        logging.info("--- History Synced. Waiting for NEW messages... ---")
 
 # =====================================================
 # MAIN LOOP
@@ -446,4 +468,10 @@ async def main():
         await check_sms()
         await asyncio.sleep(3)
 
-asyncio.run(main())
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logging.info("Bot stopped by user.")
+    except Exception as e:
+        logging.critical(f"Fatal error in main loop: {e}") 
