@@ -1,3 +1,5 @@
+#--- START OF FILE Bot2.py ---
+
 import os
 import re
 import json
@@ -66,7 +68,6 @@ OTP_REGEX = re.compile(r"\b\d{4,8}\b")
 # COUNTRY DETECTOR
 # =====================================================
 COUNTRIES = {
-# ... (দেশের তালিকা অপরিবর্তিত)
 "972": "🇮🇱 Israel",
 "880": "🇧🇩 Bangladesh",
 "91": "🇮🇳 India",
@@ -371,7 +372,7 @@ async def check_sms():
         logging.info("No data received or 'aaData' missing in API response.")
         return
 
-    for row in "aaData"]:
+    for row in data["aaData"]:
         if len(row) < 6:
             continue
 
@@ -474,4 +475,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         logging.info("Bot stopped by user.")
     except Exception as e:
-        logging.critical(f"Fatal error in main loop: {e}") 
+        logging.critical(f"Fatal error in main loop: {e}")
+
+#--- END OF FILE Bot2.py ---
