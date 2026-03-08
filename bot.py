@@ -1,5 +1,3 @@
-#--- START OF FILE Bot2.py ---
-
 import os
 import re
 import json
@@ -13,61 +11,57 @@ import threading
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
 # =====================================================
-# HEALTH CHECK SERVER
+# HEALTH CHECK SERVER (For Render/Heroku)
 # =====================================================
 app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "BOT RUNNING OK"
+    return "BOT IS ONLINE"
 
 def run_web():
     app.run(host="0.0.0.0", port=10000)
 
-threading.Thread(target=run_web).start()
+threading.Thread(target=run_web, daemon=True).start()
 
 # =====================================================
 # ENVIRONMENT VARIABLES
 # =====================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-
 USERNAME = os.getenv("PANEL_USER")
 PASSWORD = os.getenv("PANEL_PASS")
 
 BASE = "http://91.232.105.47"
-DATA_URL = BASE + "/ints/agent/res/data_smscdr.php"
-LOGIN_PAGE = BASE + "/ints/login"
-LOGIN_POST = BASE + "/ints/signin"
+DATA_URL = f"{BASE}/ints/agent/res/data_smscdr.php"
+LOGIN_PAGE = f"{BASE}/ints/login"
+LOGIN_POST = f"{BASE}/ints/signin"
 
 # =====================================================
-# LOGGING
+# LOGGING & BOT INIT
 # =====================================================
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-# Bot টোকেন না থাকলে লগিং শুরু হবে না, তাই এখানে try-except ব্যবহার করা ভালো
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 try:
     bot = Bot(token=BOT_TOKEN)
 except Exception as e:
-    logging.error(f"Failed to initialize Telegram Bot. Check BOT_TOKEN. Error: {e}")
-    bot = None # যদি ইনিশিয়ালাইজ না হয়
+    logging.error(f"Bot Token Error: {e}")
+    bot = None
 
-# =====================================================
-# REQUESTS SESSION
-# =====================================================
 session = requests.Session()
 session.headers.update({
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/120 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
     "Accept-Language": "en-US,en;q=0.9"
 })
 
-# OTP REGEX
 OTP_REGEX = re.compile(r"\b\d{4,8}\b")
+sent_keys = set()
+first_run = True
 
 # =====================================================
-# COUNTRY DETECTOR
+# HELPERS
 # =====================================================
-COUNTRIES = {
+def get_country(number):
+    COUNTRIES = {
 "972": "🇮🇱 Israel",
 "880": "🇧🇩 Bangladesh",
 "91": "🇮🇳 India",
@@ -287,194 +281,113 @@ def get_country(number):
         if number.startswith(code):
             return COUNTRIES[code]
     return "🌍 Unknown Country"
-    
-# =====================================================
-# MEMORY-ONLY SENT KEYS (RENDER SAFE)
-# =====================================================
-sent_keys = set()
 
-first_run = True 
-
-# =====================================================
-# LOGIN FUNCTION
-# =====================================================
 def login():
     try:
         page = session.get(LOGIN_PAGE, timeout=10)
         m = re.search(r"What is (\d+)\s*\+\s*(\d+)", page.text)
-        captcha = int(m.group(1)) + int(m.group(2)) if m else None
-
         payload = {"username": USERNAME, "password": PASSWORD}
-        if captcha:
-            payload["capt"] = captcha
-
-        res = session.post(LOGIN_POST, data=payload, timeout=10)
-
-        if "dashboard" in res.text.lower():
-            logging.info("Login success ✓")
-            return True
-
-        if res.status_code == 200 and "login" not in res.text.lower():
-            logging.info("Login success ✓")
-            return True
-
-        logging.error(f"Login failed ✗. Response text snippet: {res.text[:100]}")
-        return False
-
-    except Exception as e:
-        logging.error(f"Login Error: {e}")
-        return False
-
-# =====================================================
-# API URL GENERATOR
-# =====================================================
-def get_api_url():
-    today = datetime.now().strftime("%Y-%m-%d")
-    return (
-        f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59&"
-        "sEcho=1&iColumns=7&iDisplayStart=0&iDisplayLength=50"
-    )
-
-# =====================================================
-# FETCH PANEL DATA
-# =====================================================
-def fetch_data():
-    try:
-        response = session.get(
-            get_api_url(),
-            headers={"X-Requested-With": "XMLHttpRequest"},
-            timeout=10
-        )
+        if m: payload["capt"] = int(m.group(1)) + int(m.group(2))
         
-        if response.status_code != 200:
-            logging.warning(f"Panel data fetch failed. Status Code: {response.status_code}")
-            return None
-
-        if "login" in response.text.lower():
-            logging.warning("Session expired. Re-logging in.")
-            login()
-            return None
-
-        return response.json()
-
+        res = session.post(LOGIN_POST, data=payload, timeout=10)
+        if "dashboard" in res.text.lower() or res.status_code == 200:
+            logging.info("Login Successful ✓")
+            return True
+        return False
     except Exception as e:
-        logging.error(f"Data Fetch Error: {e}")
-        return None
+        logging.error(f"Login Failed: {e}")
+        return False
 
 # =====================================================
-# CHECK OTP + SEND MESSAGE
+# CORE LOGIC
 # =====================================================
 async def check_sms():
     global first_run
-    data = fetch_data()
-    
-    if not data or "aaData" not in data:
-        logging.info("No data received or 'aaData' missing in API response.")
-        return
-
-    for row in data["aaData"]:
-        if len(row) < 6:
-            continue
-
-        date = str(row[0]).strip()
-        number = str(row[2]).strip()
-        service = str(row[3]).strip()
-        message = str(row[5]).strip()
-
-        # Check if message is empty or just whitespace
-        if not message:
-            continue
-
-        # Unique key
-        key = f"{number}|{message}|{date}"
+    try:
+        today = datetime.now().strftime("%Y-%m-%d")
+        api_url = f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59&sEcho=1&iDisplayLength=50"
         
-        if first_run:
+        response = session.get(api_url, headers={"X-Requested-With": "XMLHttpRequest"}, timeout=10)
+        
+        if "login" in response.text.lower():
+            login()
+            return
+
+        data = response.json()
+        if "aaData" not in data: return
+
+        for row in data["aaData"]:
+            if len(row) < 6: continue
+            
+            date, number, service, message = str(row[0]), str(row[2]), str(row[3]), str(row[5])
+            if not message: continue
+
+            key = f"{number}|{message}|{date}"
+            if first_run:
+                sent_keys.add(key)
+                continue
+            if key in sent_keys: continue
+
+            # New Message Processing
             sent_keys.add(key)
-            continue
+            matches = OTP_REGEX.findall(message)
+            otp = matches[0] if matches else "N/A"
+            country = get_country(number)
+            masked_num = number[:-5] + "**" + number[-3:] if len(number) > 5 else number
 
-        if key in sent_keys:
-            continue
+            # UI Design: Buttons for each number found in SMS
+            buttons = []
+            all_numbers = re.findall(r'\d{4,8}', message)
+            for n in all_numbers:
+                buttons.append([InlineKeyboardButton(f"🔢 Code: {n}", callback_data="none")])
+            
+            buttons.append([
+                InlineKeyboardButton("🧑‍💻 Dev", url="https://t.me/RTX_ABIR_4090"),
+                InlineKeyboardButton("📞 Channel", url="https://t.me/GURUBIT")
+            ])
+            
+            text = (
+                "🚀 <b>NEW SMS INCOMING</b> 🚀\n"
+                "━━━━━━━━━━━━━━━━━━\n"
+                f"📅 <b>Time:</b> <code>{date}</code>\n"
+                f"📞 <b>From:</b> <code>{masked_num}</code>\n"
+                f"🌍 <b>Origin:</b> {country}\n"
+                f"⚙️ <b>Service:</b> <b>{service}</b>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
+                f"📝 <b>SMS Content:</b>\n<i>{message}</i>\n"
+                "━━━━━━━━━━━━━━━━━━\n"
+                f"🔐 <b>Extracted OTP:</b> <code>{otp}</code>"
+            )
 
-        # Find OTP code (if any)
-        matches = OTP_REGEX.findall(message)
-        if matches:
-            otp = max(matches, key=len)
-        else:
-            otp = "No Code Found"
-
-        sent_keys.add(key)
-        country = get_country(number)
-
-        # -------------------------------------------------
-        # NUMBER MASKING LOGIC
-        # -------------------------------------------------
-        # Keeps last 3 digits visible.
-        # Masks the 2 digits before that with '**'.
-        if len(number) >= 5:
-            masked_number = number[:-5] + "**" + number[-3:]
-        else:
-            masked_number = number  
-        # -------------------------------------------------
-
-        text = (
-            "✨ <b>SMS Received</b> ✨\n\n"
-            f"⏰ <b>Time:</b> {date}\n"
-            f"📞 <b>Number:</b> {masked_number}\n"
-            f"🌍 <b>Country:</b> {country}\n"
-            f"🔧 <b>Service:</b> {service}\n"
-            f"🔐 <b>OTP/Code:</b> <code>{otp}</code>\n"
-            f"📝 <b>Message:</b> <i>{message}</i>\n\n"
-            "<b>POWERED BY</b> @RTX_ABIR_4090"
-        )
-
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🧑‍💻Dev", url="https://t.me/RTX_ABIR_4090")],
-            [InlineKeyboardButton("📞Number", url="https://t.me/GURUBIT")]
-        ])
-        
-        # --- DEBUG LOGGING ADDED ---
-        logging.info(f"NEW MESSAGE DETECTED! Key: {key} | OTP: {otp} | Country: {country}")
-        # ---------------------------
-
-        try:
-            if bot and CHAT_ID:
-                # AWAIT ADDED: Telegram Bot send_message is an awaitable method
+            if bot:
                 await bot.send_message(
                     chat_id=CHAT_ID,
                     text=text,
                     parse_mode="HTML",
-                    reply_markup=keyboard
+                    reply_markup=InlineKeyboardMarkup(buttons)
                 )
-                logging.info(f"[✓] SMS SENT to {CHAT_ID} -> OTP: {otp}") # ডিবাগিং লগ
-            else:
-                logging.error("Cannot send message: bot object or CHAT_ID is missing.")
+                logging.info(f"Forwarded: {otp}")
 
-        except Exception as e:
-            # টেলিগ্রামের ক্ষেত্রে এটি সবচেয়ে সাধারণ ব্যর্থতা
-            logging.error(f"Telegram error sending message to {CHAT_ID}: {e}")
+        if first_run:
+            first_run = False
+            logging.info("Sync complete. Waiting for new SMS...")
 
-    if first_run:
-        first_run = False
-        logging.info("--- History Synced. Waiting for NEW messages... ---")
+    except Exception as e:
+        logging.error(f"Error: {e}")
 
 # =====================================================
-# MAIN LOOP
+# MAIN RUNNER
 # =====================================================
 async def main():
-    if not login():
-        logging.error("Login failed. Bot stopping.")
-        return
-
-    while True:
-        await check_sms()
-        await asyncio.sleep(3)
+    if login():
+        while True:
+            await check_sms()
+            await asyncio.sleep(5) # Will check every 5 seconds
+    else:
+        logging.critical("Initial Login Failed! Check Credentials.")
 
 if __name__ == '__main__':
     try:
         asyncio.run(main())
-    except KeyboardInterrupt:
-        logging.info("Bot stopped by user.")
-    except Exception as e:
-        logging.critical(f"Fatal error in main loop: {e}")
-
-#--- END OF FILE Bot2.py ---
+    except (KeyboardInterrupt, SystemExit):
+        pass
