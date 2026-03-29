@@ -1,55 +1,44 @@
 import os
 import re
-import json
-import time
 import asyncio
 import logging
 import requests
 from datetime import datetime
-from flask import Flask
-import threading
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
 # =====================================================
-# HEALTH CHECK SERVER (For Render/Heroku)
-# =====================================================
-app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "BOT IS ONLINE"
-
-def run_web():
-    app.run(host="0.0.0.0", port=10000)
-
-threading.Thread(target=run_web, daemon=True).start()
-
-# =====================================================
-# ENVIRONMENT VARIABLES
+# ENV VARIABLES (SAFE)
 # =====================================================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 USERNAME = os.getenv("PANEL_USER")
 PASSWORD = os.getenv("PANEL_PASS")
+BASE = os.getenv("BASE_URL")  # put your base URL here
 
-BASE = "http://91.232.105.47"
+if not BOT_TOKEN:
+    raise Exception("❌ BOT_TOKEN missing")
+if not CHAT_ID:
+    raise Exception("❌ CHAT_ID missing")
+if not BASE:
+    raise Exception("❌ BASE_URL missing")
+
 DATA_URL = f"{BASE}/ints/agent/res/data_smscdr.php"
 LOGIN_PAGE = f"{BASE}/ints/login"
 LOGIN_POST = f"{BASE}/ints/signin"
 
 # =====================================================
-# LOGGING & BOT INIT
+# LOGGING
 # =====================================================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
-try:
-    bot = Bot(token=BOT_TOKEN)
-except Exception as e:
-    logging.error(f"Bot Token Error: {e}")
-    bot = None
+
+# =====================================================
+# BOT INIT
+# =====================================================
+bot = Bot(token=BOT_TOKEN)
 
 session = requests.Session()
 session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "User-Agent": "Mozilla/5.0",
     "Accept-Language": "en-US,en;q=0.9"
 })
 
@@ -58,10 +47,9 @@ sent_keys = set()
 first_run = True
 
 # =====================================================
-# HELPERS
+# COUNTRY DETECTOR (FIXED)
 # =====================================================
-def get_country(number):
-    COUNTRIES = {
+COUNTRIES = {
 "972": "🇮🇱 Israel",
 "880": "🇧🇩 Bangladesh",
 "91": "🇮🇳 India",
@@ -280,114 +268,136 @@ def get_country(number):
     for code in sorted(COUNTRIES.keys(), key=lambda x: -len(x)):
         if number.startswith(code):
             return COUNTRIES[code]
-    return "🌍 Unknown Country"
+    return "🌍 Unknown"
 
+# =====================================================
+# LOGIN SYSTEM (IMPROVED)
+# =====================================================
 def login():
     try:
         page = session.get(LOGIN_PAGE, timeout=10)
         m = re.search(r"What is (\d+)\s*\+\s*(\d+)", page.text)
-        payload = {"username": USERNAME, "password": PASSWORD}
-        if m: payload["capt"] = int(m.group(1)) + int(m.group(2))
-        
+
+        payload = {
+            "username": USERNAME,
+            "password": PASSWORD
+        }
+
+        if m:
+            payload["capt"] = int(m.group(1)) + int(m.group(2))
+
         res = session.post(LOGIN_POST, data=payload, timeout=10)
-        if "dashboard" in res.text.lower() or res.status_code == 200:
-            logging.info("Login Successful ✓")
+
+        if res.status_code == 200:
+            logging.info("✅ Login Successful")
             return True
+
+        logging.error("❌ Login Failed")
         return False
+
     except Exception as e:
-        logging.error(f"Login Failed: {e}")
+        logging.error(f"❌ Login Error: {e}")
         return False
 
 # =====================================================
-# CORE LOGIC
+# CORE FUNCTION
 # =====================================================
 async def check_sms():
     global first_run
+
     try:
         today = datetime.now().strftime("%Y-%m-%d")
-        api_url = f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59&sEcho=1&iDisplayLength=50"
-        
-        response = session.get(api_url, headers={"X-Requested-With": "XMLHttpRequest"}, timeout=10)
-        
-        if "login" in response.text.lower():
-            login()
+        url = f"{DATA_URL}?fdate1={today}%2000:00:00&fdate2={today}%2023:59:59"
+
+        res = session.get(url, timeout=10)
+
+        # যদি login expire হয়
+        if "login" in res.text.lower():
+            if not login():
+                logging.error("⚠️ Re-login failed")
             return
 
-        data = response.json()
-        if "aaData" not in data: return
+        data = res.json()
+        if "aaData" not in data:
+            return
 
         for row in data["aaData"]:
-            if len(row) < 6: continue
-            
+            if len(row) < 6:
+                continue
+
             date, number, service, message = str(row[0]), str(row[2]), str(row[3]), str(row[5])
-            if not message: continue
+            if not message:
+                continue
 
             key = f"{number}|{message}|{date}"
+
             if first_run:
                 sent_keys.add(key)
                 continue
-            if key in sent_keys: continue
 
-            # New Message Processing
+            if key in sent_keys:
+                continue
+
             sent_keys.add(key)
-            matches = OTP_REGEX.findall(message)
-            otp = matches[0] if matches else "N/A"
-            country = get_country(number)
-            masked_num = number[:-5] + "**" + number[-3:] if len(number) > 5 else number
 
-            # UI Design: Buttons for each number found in SMS
+            # MEMORY CONTROL
+            if len(sent_keys) > 5000:
+                sent_keys.clear()
+
+            otp_match = OTP_REGEX.findall(message)
+            otp = otp_match[0] if otp_match else "N/A"
+
+            country = get_country(number)
+            masked = number[:-5] + "**" + number[-3:] if len(number) > 5 else number
+
+            # BUTTONS
             buttons = []
-            all_numbers = re.findall(r'\d{4,8}', message)
-            for n in all_numbers:
-                buttons.append([InlineKeyboardButton(f"🔢 Code: {n}", callback_data="none")])
-            
-            buttons.append([
-                InlineKeyboardButton("🧑‍💻 Dev", url="https://t.me/RTX_ABIR_4090"),
-                InlineKeyboardButton("📞 Channel", url="https://t.me/GURUBIT")
-            ])
-            
+            for n in re.findall(r'\d{4,8}', message):
+                buttons.append([InlineKeyboardButton(f"🔢 {n}", callback_data="x")])
+
             text = (
-                "🚀 <b>NEW SMS INCOMING</b> 🚀\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"📅 <b>Time:</b> <code>{date}</code>\n"
-                f"📞 <b>From:</b> <code>{masked_num}</code>\n"
-                f"🌍 <b>Origin:</b> {country}\n"
-                f"⚙️ <b>Service:</b> <b>{service}</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"📝 <b>SMS Content:</b>\n<i>{message}</i>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                f"🔐 <b>Extracted OTP:</b> <code>{otp}</code>"
+                "🚀 <b>NEW SMS</b>\n"
+                "━━━━━━━━━━━━━━\n"
+                f"📅 <code>{date}</code>\n"
+                f"📞 <code>{masked}</code>\n"
+                f"🌍 {country}\n"
+                f"⚙️ {service}\n"
+                "━━━━━━━━━━━━━━\n"
+                f"📝 <i>{message}</i>\n"
+                "━━━━━━━━━━━━━━\n"
+                f"🔐 OTP: <code>{otp}</code>"
             )
 
-            if bot:
-                await bot.send_message(
-                    chat_id=CHAT_ID,
-                    text=text,
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(buttons)
-                )
-                logging.info(f"Forwarded: {otp}")
+            await bot.send_message(
+                chat_id=CHAT_ID,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+
+            logging.info(f"📩 Sent OTP: {otp}")
 
         if first_run:
             first_run = False
-            logging.info("Sync complete. Waiting for new SMS...")
+            logging.info("✅ Sync Complete")
 
     except Exception as e:
-        logging.error(f"Error: {e}")
+        logging.error(f"❌ Error: {e}")
 
 # =====================================================
-# MAIN RUNNER
+# MAIN LOOP (OPTIMIZED)
 # =====================================================
 async def main():
-    if login():
-        while True:
-            await check_sms()
-            await asyncio.sleep(5) # Will check every 5 seconds
-    else:
-        logging.critical("Initial Login Failed! Check Credentials.")
+    if not login():
+        logging.critical("❌ Initial login failed")
+        return
 
-if __name__ == '__main__':
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    while True:
+        await check_sms()
+        await asyncio.sleep(12)  # optimized delay
+
+# =====================================================
+# RUN
+# =====================================================
+if __name__ == "__main__":
+    asyncio.run(main())
